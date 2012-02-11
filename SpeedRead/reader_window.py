@@ -68,7 +68,6 @@ class ReaderWindow(ThreadingActor):
 				callback = self.set_text).proxy()
 
 	def set_text(self, text):
-		print text
 		self._text_field.set_label(text)
 
 	def make_menues(self):
@@ -85,13 +84,11 @@ class ReaderWindow(ThreadingActor):
 
 	def OnOpen(self, evt):
 		self.dirname = ''
-		diag = wx.FileDialog(self, "Choose file to be read", self.dirname, '', '*.txt', wx.OPEN)
+		diag = wx.FileDialog(self.frame, "Choose file to be read", self.dirname, '', '*.txt', wx.OPEN)
 		if diag.ShowModal() == wx.ID_OK:
 			self.filepath = diag.GetPath()
 			self.dirname = diag.GetDirectory()
-			with open(self.filepath) as f:
-				#XXX
-				self.manager.queue_message(ReaderReady(text = f.read()))
+			self._text_buffer.replace_input(FileTextGenerator.start(self.filepath).proxy())
 		diag.Destroy()
 
 	def OnQuit(self, evt):
@@ -113,7 +110,7 @@ class ReaderWindow(ThreadingActor):
 		if not self.running:
 			config = self._config_panel.GetValue()
 			self._text_buffer.set_word_speed(wpm = config['wpm'], wpc = config['wpc'])
-			self._text_buffer.go()
+			self._text_buffer.go().get()
 		else:
 			self._text_buffer.pause()
 		self.running = not self.running
@@ -124,7 +121,8 @@ class SpeedRead(wx.App):
 	def OnInit(self):
 		frame = ReaderWindow.start(None, title = 'Speed Read').proxy()
 		return frame.Show().get()
-
+	def OnExit(self):
+		ActorRegistry.stop_all()
 
 if __name__ == '__main__':
 	app = SpeedRead()

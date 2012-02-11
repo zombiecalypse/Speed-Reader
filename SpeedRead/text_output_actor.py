@@ -49,6 +49,8 @@ class SentenceBuffer(object):
 		new = map(pattern_word.split, pattern_sentence.split(text))
 		self._text += new
 		self._fill += len([word for sentence in new for word in sentence])
+	def invariant(self):
+		assert self._fill == len([word for sentence in self._text for word in sentence])
 
 class Timer(ThreadingActor):
 	def call(self, callback, t = 1.1):
@@ -111,7 +113,8 @@ class TextBuffer(ThreadingActor):
 		self.add_text(new_text.get())
 	
 	def add_text(self, txt):
-		self._text.add_text(txt)
+		if txt:
+			self._text.add_text(txt)
 
 class TextGenerator(ThreadingActor):
 	def text(self, min_n_words):
