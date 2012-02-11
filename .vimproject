@@ -1,0 +1,5 @@
+
+SpeedRead=/home/aaron/Dropbox/Projects/SpeedRead {
+	src=SpeedRead filter="*.py" {
+	}
+}
