@@ -1,5 +1,10 @@
 
 SpeedRead=/home/aaron/Dropbox/Projects/SpeedRead {
+ SpeedRead.py
+ setup.py
 	src=SpeedRead filter="*.py" {
+  __init__.py
+  reader_window.py
+  text_output_actor.py
 	}
 }
