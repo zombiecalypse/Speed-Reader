@@ -11,8 +11,11 @@ SpeedRead=/home/aaron/Dropbox/Projects/SpeedRead {
    helpers.py
   }
  }
- test=SpeedRead filter="test_*.py" {
+ test=SpeedRead filter="**/test_*.py" {
+  helpers/test_assure.py
+  helpers/test_logging_helpers.py
   test_book_format.py
+  test_text_buffer.py
  }
  
 }
