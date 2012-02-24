@@ -104,6 +104,10 @@ class Book(object):
         self.at = car
         self.current.coord = cdr
 
+    @property
+    def flat_coord(self):
+        return sum(map(len, self.sub[:self.at])) + self.current.flat_coord
+
     def __repr__(self):
         return "<{} sub={!r} at={}>".format(self.__class__.__name__, self._sub, self.at)
 

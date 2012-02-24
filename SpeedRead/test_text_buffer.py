@@ -8,7 +8,7 @@ class TestTextOutput(unittest.TestCase):
     def setUp(self):
         self.received = []
         self.text_buffer = TextBuffer\
-            .start(callback = self.received.append, words_per_minute = 10000,
+                .start(callback = lambda x,y: self.received.append(x), words_per_minute = 10000,
                     words_per_chunk = 2).proxy()
 
     def tearDown(self):

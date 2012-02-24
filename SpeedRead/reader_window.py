@@ -13,6 +13,7 @@ from pykka.registry import ActorRegistry
 from .text_output_actor import *
 from multiprocessing import Value as SharedValue
 
+BEGIN = (0,0)
 class TextDisplay(wx.Panel):
     "Centered display of text"
     def __init__(self, parent):
@@ -119,15 +120,14 @@ class ReaderWindow(ThreadingActor):
         self.frame.SetSizer(sizer)
 
     def OnResetButton(self, evt):
-        begin = (0,0)
-        self._text_buffer.coord = begin
-        self._text_field.set_label("", begin)
+        self._text_buffer.coord = BEGIN
+        self._text_field.set_label("", BEGIN)
 
     def OnGoButton(self, evt):
-        if not self.running:
-            self.go()
-        else:
+        if self.running:
             self.pause()
+        else:
+            self.go()
 
     def pause(self):
         self._text_buffer.pause()
