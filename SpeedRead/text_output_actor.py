@@ -19,15 +19,6 @@ from .book_format import Book
 
 from pykka.actor import ThreadingActor
 
-
-class _Constant:
-	def __init__(self, c):
-		self.c = c
-	def get(self):
-		return self.c
-
-EMPTY_STRING = _Constant("")
-
 class TextBuffer(ThreadingActor):
     BUFFERED_CHUNKS  = 10
     TICK_TIME        = timedelta(milliseconds = 50)
@@ -41,7 +32,7 @@ class TextBuffer(ThreadingActor):
         self.words_per_minute = words_per_minute
         self.words_per_chunk = words_per_chunk
         self.book = Book.create(text)
-        self.callback = assure(str)(callback)
+        self.callback = assure(str, _)(callback)
         self.finished = finished
 
     @property
@@ -82,10 +73,19 @@ class TextBuffer(ThreadingActor):
         else:
             self._paused = True
         if not self._paused:
-            self.callback(ret)
+            logger.debug(self.coord)
+            self.callback(ret, self.coord)
             self.after(self.timeout, self.as_message.send_new_text)
         else:
             self.finished()
+
+    @property
+    def coord(self):
+        return self.book.coord
+
+    @coord.setter
+    def coord(self, o):
+        self.book.coord = o
 
     def add_text(self, txt):
         if txt:

@@ -18,16 +18,19 @@ class TextDisplay(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         sizer = wx.GridSizer(1,1,5,5)
+        self._coord = wx.StaticText(self, -1, "")
         self._text = wx.StaticText(self, -1, "bla")
+        sizer.Add(self._coord, 0, wx.ALL | wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL)
         sizer.Add(self._text, 0, wx.ALL | wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTRE_VERTICAL)
         self.SetSizer(sizer)
 
-    def SetLabel(self, text):
+    def SetLabel(self, text, c):
         self._text.SetLabel(text)
+        #self._coord.SetLabel(str(c))
         self.Layout()
 
-    def set_label(self, text):
-        wx.CallAfter(self.SetLabel, text)
+    def set_label(self, text, c):
+        wx.CallAfter(self.SetLabel, text, c)
 
 class ConfigPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
@@ -70,8 +73,8 @@ class ReaderWindow(ThreadingActor):
                 callback = self.as_message.set_text,
                 finished = self.as_message.pause).proxy()
 
-    def set_text(self, text):
-        self._text_field.set_label(text)
+    def set_text(self, text, coord):
+        self._text_field.set_label(text, coord)
 
     def make_menues(self):
         menuBar = wx.MenuBar()
@@ -102,13 +105,23 @@ class ReaderWindow(ThreadingActor):
     def make_widgets(self):
         self._text_field = TextDisplay(self.frame)
         self._go_button = wx.Button(self.frame, label = "Go!")
+        self._reset_button = wx.Button(self.frame, label = "Reset")
         self._config_panel = ConfigPanel(self, self.frame)
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(self._text_field, 1, wx.EXPAND, 10)
         sizer.Add(self._config_panel)
-        sizer.Add(self._go_button)
+        sizer_h.Add(self._go_button)
+        sizer_h.Add(self._reset_button)
+        sizer.Add(sizer_h)
         self.frame.Bind(wx.EVT_BUTTON, self.OnGoButton, self._go_button)
+        self.frame.Bind(wx.EVT_BUTTON, self.OnResetButton, self._reset_button)
         self.frame.SetSizer(sizer)
+
+    def OnResetButton(self, evt):
+        begin = (0,0)
+        self._text_buffer.coord = begin
+        self._text_field.set_label("", begin)
 
     def OnGoButton(self, evt):
         if not self.running:
