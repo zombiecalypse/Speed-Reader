@@ -6,22 +6,24 @@
 # Description:
 #           
 
-import time, datetime, threading, re
+import time, datetime, re
 import itertools
+import logging
 
-from multiprocessing import Value as SharedValue
+from .helpers import *
+from .helpers import _
 
 from pykka.actor import ThreadingActor
 
-pattern_sentence = re.compile('(?<=[\.!:?])\s|^$', re.MULTILINE)
-pattern_word     = re.compile('\s+')
+logger = logging.getLogger('Text Actors')
 
-class Constant:
+class _Constant:
 	def __init__(self, c):
 		self.c = c
 	def get(self):
 		return self.c
-EMPTY_STRING = Constant("")
+
+EMPTY_STRING = _Constant("")
 
 class SentenceBuffer(object):
 	def __init__(self):
@@ -52,34 +54,31 @@ class SentenceBuffer(object):
 	def invariant(self):
 		assert self._fill == len([word for sentence in self._text for word in sentence])
 
-class Timer(ThreadingActor):
-	def call(self, callback, t = 1.1):
-		"Calls the callback t seconds from now"
-		time.sleep(t)
-		callback()
-
 class TextBuffer(ThreadingActor):
 	BUFFERED_CHUNKS = 10
+
+    words_per_minute = accessor('words_per_minute', logger = logger.debug, float)
+    words_per_chunk = accessor('words_per_chunk', logger = logger.debug, int)
+
 	def __init__(self, text_producer, callback, words_per_minute = 300, words_per_chunk = 1):
 		ThreadingActor.__init__(self)
-		self._words_per_minute = words_per_minute
-		self._words_per_chunk = words_per_chunk
+		self.words_per_minute = words_per_minute
+		self.words_per_chunk = words_per_chunk
 		self._text = SentenceBuffer()
-		self._timer = Timer.start().proxy()
 		self.text_producer = text_producer
 		self.callback = callback
 		self.request_new_text()
 
 	@property
 	def timeout(self):
-		return datetime.timedelta(minutes = 1) * self._words_per_chunk / self._words_per_minute
+		return datetime.timedelta(minutes = 1) * self.words_per_chunk / self.words_per_minute
 	
 	def set_word_speed(self, wpm, wpc):
-		self._words_per_minute = int(wpm)
-		self._words_per_chunk = int(wpc)
+		self.words_per_minute = wpm
+		self.words_per_chunk = wpc
 	
 	def request_new_text(self):
-		fillup_needed = self._words_per_chunk * self.BUFFERED_CHUNKS - self._text.fill
+		fillup_needed = self.words_per_chunk * self.BUFFERED_CHUNKS - self._text.fill
 		if fillup_needed > 0:
 			return self.text_producer.text(fillup_needed)
 		else:
@@ -106,7 +105,7 @@ class TextBuffer(ThreadingActor):
 		new_text = self.request_new_text()
 		ret = ""
 		if self.has_text():
-			ret += " ".join(self._text.get_next_words(self._words_per_chunk))
+			ret += " ".join(self._text.get_next_words(self.words_per_chunk))
 		if not self._paused:
 			self._timer.call(self.send_new_text, self.timeout.total_seconds())
 			self.callback(ret)
@@ -124,6 +123,8 @@ class ConstTextGenerator(TextGenerator):
 	def __init__(self, txt):
 		TextGenerator.__init__(self)
 		self._text = itertools.cycle(txt.split())
+
+    @assure(_, int)
 	def text(self, n):
 		return " ".join([self._text.next() for i in range(n)])
 
@@ -131,6 +132,8 @@ class FileTextGenerator(TextGenerator):
 	def __init__(self, filename):
 		TextGenerator.__init__(self)
 		self.file_lines = open(filename).xreadlines()
+
+    @assure(_, int)
 	def text(self, n):
 		got = 0
 		lines = []

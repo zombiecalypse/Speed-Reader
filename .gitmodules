@@ -1,0 +1,3 @@
+[submodule "SpeedRead/helpers"]
+	path = SpeedRead/helpers
+	url = git@github.com:zombiecalypse/Zombiecalypse-Python-Helpers.git
