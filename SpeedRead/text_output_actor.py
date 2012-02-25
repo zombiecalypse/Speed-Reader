@@ -74,7 +74,7 @@ class TextBuffer(ThreadingActor):
             self._paused = True
         if not self._paused:
             logger.debug(self.coord)
-            self.callback(ret, self.coord)
+            self.callback(ret, self.book.flat_coord)
             self.after(self.timeout, self.as_message.send_new_text)
         else:
             self.finished()

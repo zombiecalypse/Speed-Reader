@@ -19,6 +19,7 @@ class Book(object):
     def __init__(self, sub_structure, at = 0):
         self._sub = sub_structure
         self.at  = at
+        self._flat_coord = 0
 
     def __len__(self):
         return sum(len(s) for s in self._sub)
@@ -105,8 +106,21 @@ class Book(object):
         self.current.coord = cdr
 
     @property
+    def past(self):
+        return self._sub[:self.at]
+
+    @property
     def flat_coord(self):
-        return sum(map(len, self.sub[:self.at])) + self.current.flat_coord
+        return sum(len(s) for s in self.past) + self.current.flat_coord
+
+    @flat_coord.setter
+    def flat_coord(self, o):
+        index = 0
+        while sum(len(s) for s in self._sub[:index+1]) <= o and index < len(self._sub):
+            index += 1
+        self.at = index
+        rest = o - sum(len(s) for s in self._sub[:index])
+        self.current.flat_coord = rest
 
     def __repr__(self):
         return "<{} sub={!r} at={}>".format(self.__class__.__name__, self._sub, self.at)
@@ -154,7 +168,15 @@ class Snipplet(Book):
         return cls([])
 
     def __len__(self):
-        return len(self._sub) - self.at
+        return len(self._sub)
 
     def to_list(self):
         return self._sub[:]
+
+    @property
+    def flat_coord(self):
+        return self.at
+
+    @flat_coord.setter
+    def flat_coord(self, o):
+        self.at = o

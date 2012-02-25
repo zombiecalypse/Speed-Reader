@@ -27,7 +27,7 @@ class TextDisplay(wx.Panel):
 
     def SetLabel(self, text, c):
         self._text.SetLabel(text)
-        #self._coord.SetLabel(str(c))
+        self._coord.SetLabel(str(c))
         self.Layout()
 
     def set_label(self, text, c):
